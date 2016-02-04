@@ -1,23 +1,25 @@
 #!/usr/bin/env node
 
 var fs   = require('fs'),
+    path = require('path'),
     args = require('optimist').argv,
-    hbs  = require('handlebars');
+    hbs  = require('handlebars'),
+    params = {};
 
 if (args._.length) {
     try {
-				var configFile = args._[0];
+        var configFile = args._[0].toString();
 
-				if (configFile.match(/js$/)) {
-					args = require(configFile);
-				} else {
-					args = JSON.parse(fs.readFileSync(configFile).toString());
-				}
+        if (configFile.match(/js$/)) {
+          params = require(path.join(process.cwd(), configFile));
+        } else {
+          params = JSON.parse(fs.readFileSync(configFile).toString());
+        }
     } catch (e) { }
 }
 else for (var key in args) {
     try {
-        args[key] = JSON.parse(args[key]);
+        params[key] = JSON.parse(args[key]);
     } catch (e) {
     }
 }
@@ -34,16 +36,16 @@ function readStream(s, done) {
 }
 
 readStream(process.stdin, function(err, tmpl) {
-    function handle(tmpl, args) {
+    function handle(tmpl, params) {
         hbs.registerHelper('include', function (file, context, opt) {
             var context = null == context ? args : context;
             var f = fs.readFileSync(file);
             return handle(f, context); 
         });
         var template = hbs.compile(tmpl.toString());
-        var result = template(args);
+        var result = template(params);
         return result;
     }
-    process.stdout.write(handle(tmpl, args));
+    process.stdout.write(handle(tmpl, params));
 });
 
