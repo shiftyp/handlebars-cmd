@@ -3,23 +3,22 @@
 var fs   = require('fs'),
     path = require('path'),
     args = require('optimist').argv,
-    hbs  = require('handlebars'),
-    params = {};
+    hbs  = require('handlebars');
 
 if (args._.length) {
     try {
         var configFile = args._[0].toString();
 
         if (configFile.match(/js$/)) {
-          params = require(path.join(process.cwd(), configFile));
+          args = require(path.join(process.cwd(), configFile));
         } else {
-          params = JSON.parse(fs.readFileSync(configFile).toString());
+          args = JSON.parse(fs.readFileSync(configFile).toString());
         }
     } catch (e) { }
 }
 else for (var key in args) {
     try {
-        params[key] = JSON.parse(args[key]);
+        args[key] = JSON.parse(args[key]);
     } catch (e) {
     }
 }
@@ -36,16 +35,16 @@ function readStream(s, done) {
 }
 
 readStream(process.stdin, function(err, tmpl) {
-    function handle(tmpl, params) {
+    function handle(tmpl, args) {
         hbs.registerHelper('include', function (file, context, opt) {
             var context = null == context ? args : context;
             var f = fs.readFileSync(file);
             return handle(f, context); 
         });
         var template = hbs.compile(tmpl.toString());
-        var result = template(params);
+        var result = template(args);
         return result;
     }
-    process.stdout.write(handle(tmpl, params));
+    process.stdout.write(handle(tmpl, args));
 });
 
