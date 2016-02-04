@@ -6,7 +6,13 @@ var fs   = require('fs'),
 
 if (args._.length) {
     try {
-        args = JSON.parse(fs.readFileSync(args._[0]).toString());
+				var configFile = args._[0];
+
+				if (configFile.match(/js$/)) {
+					args = require(configFile);
+				} else {
+					args = JSON.parse(fs.readFileSync(configFile).toString());
+				}
     } catch (e) { }
 }
 else for (var key in args) {
